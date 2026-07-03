@@ -2,7 +2,7 @@
 
 This project treats YouTrack data as potentially sensitive (operational or
 healthcare-adjacent). The guarantees below are non-negotiable and enforced by the
-[project constitution](../.specify/memory/constitution.md).
+[project constitution](https://github.com/ryancheley/yt-issue-reviewer/blob/main/.specify/memory/constitution.md).
 
 ## What leaves your infrastructure: nothing
 
@@ -37,4 +37,4 @@ CI and release workflows use least-privilege permissions and hash-pinned actions
 by `zizmor` as a required check. Dependabot keeps those pins current. Releases publish via
 PyPI Trusted Publishing (OIDC) — no long-lived token is stored.
 
-See the [constitution](../.specify/memory/constitution.md) for the full set of principles.
+See the [constitution](https://github.com/ryancheley/yt-issue-reviewer/blob/main/.specify/memory/constitution.md) for the full set of principles.

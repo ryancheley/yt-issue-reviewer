@@ -1,6 +1,6 @@
 # Releasing
 
-Releases are published to PyPI by the [`release.yml`](../.github/workflows/release.yml)
+Releases are published to PyPI by the [`release.yml`](https://github.com/ryancheley/yt-issue-reviewer/blob/main/.github/workflows/release.yml)
 workflow when a version tag (`vX.Y.Z`) is pushed. Publishing uses **PyPI Trusted
 Publishing (OIDC)** — there is no stored PyPI token.
 

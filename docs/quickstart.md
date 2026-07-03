@@ -47,4 +47,4 @@ Repeat runs over unchanged issues are near-instant thanks to the embedding cache
 - What leaves your infrastructure (nothing): [privacy & security](./privacy-and-security.md).
 
 For the full validated walkthrough (including degraded-mode behavior), see
-[`specs/001-related-issue-finder/quickstart.md`](../specs/001-related-issue-finder/quickstart.md).
+[`specs/001-related-issue-finder/quickstart.md`](https://github.com/ryancheley/yt-issue-reviewer/blob/main/specs/001-related-issue-finder/quickstart.md).

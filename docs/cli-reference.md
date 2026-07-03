@@ -1,7 +1,7 @@
 # CLI Reference
 
 `yt-issue-reviewer [GLOBAL OPTIONS] COMMAND [ARGS]`. This mirrors the command contract in
-[`specs/001-related-issue-finder/contracts/cli.md`](../specs/001-related-issue-finder/contracts/cli.md).
+[`specs/001-related-issue-finder/contracts/cli.md`](https://github.com/ryancheley/yt-issue-reviewer/blob/main/specs/001-related-issue-finder/contracts/cli.md).
 
 ## Global options
 

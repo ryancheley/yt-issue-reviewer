@@ -1,6 +1,6 @@
 # Related Issue Finder (`yt-issue-reviewer`)
 
-[![Documentation Status](https://readthedocs.org/projects/yt-issue-reviewer/badge/?version=latest)](https://yt-issue-reviewer.readthedocs.io/en/latest/)
+[![Documentation Status](https://readthedocs.org/projects/yt-issue-reviewer/badge/?version=stable)](https://yt-issue-reviewer.readthedocs.io/en/stable/)
 
 A run-on-demand CLI that helps a team lead find **related issues** across a YouTrack
 instance — probable duplicates, issues about the same feature/root cause, and issues with
@@ -39,7 +39,7 @@ datasette ./yir.db                                # browse results externally
 
 Prerequisites: [uv](https://docs.astral.sh/uv/), an authenticated `youtrack-cli`, and a
 reachable self-hosted Ollama with `nomic-embed-text` pulled. Full walkthrough in the
-[quickstart](https://yt-issue-reviewer.readthedocs.io/en/latest/quickstart.html).
+[quickstart](https://yt-issue-reviewer.readthedocs.io/en/stable/quickstart.html).
 
 ## Documentation
 
@@ -47,13 +47,13 @@ Full docs are hosted at **<https://yt-issue-reviewer.readthedocs.io/>**.
 
 | Doc | What it covers |
 |-----|----------------|
-| [Installation](https://yt-issue-reviewer.readthedocs.io/en/latest/installation.html) | Prerequisites and install |
-| [Quickstart](https://yt-issue-reviewer.readthedocs.io/en/latest/quickstart.html) | Zero → first analysis |
-| [CLI reference](https://yt-issue-reviewer.readthedocs.io/en/latest/cli-reference.html) | Every command, flag, and exit code |
-| [Configuration](https://yt-issue-reviewer.readthedocs.io/en/latest/configuration.html) | Env vars + `config.toml` with defaults |
-| [Architecture](https://yt-issue-reviewer.readthedocs.io/en/latest/architecture.html) | The hybrid scoring pipeline |
-| [Privacy & security](https://yt-issue-reviewer.readthedocs.io/en/latest/privacy-and-security.html) | What leaves your infra (nothing) |
-| [Releasing](https://yt-issue-reviewer.readthedocs.io/en/latest/releasing.html) | Tag-driven PyPI release process |
+| [Installation](https://yt-issue-reviewer.readthedocs.io/en/stable/installation.html) | Prerequisites and install |
+| [Quickstart](https://yt-issue-reviewer.readthedocs.io/en/stable/quickstart.html) | Zero → first analysis |
+| [CLI reference](https://yt-issue-reviewer.readthedocs.io/en/stable/cli-reference.html) | Every command, flag, and exit code |
+| [Configuration](https://yt-issue-reviewer.readthedocs.io/en/stable/configuration.html) | Env vars + `config.toml` with defaults |
+| [Architecture](https://yt-issue-reviewer.readthedocs.io/en/stable/architecture.html) | The hybrid scoring pipeline |
+| [Privacy & security](https://yt-issue-reviewer.readthedocs.io/en/stable/privacy-and-security.html) | What leaves your infra (nothing) |
+| [Releasing](https://yt-issue-reviewer.readthedocs.io/en/stable/releasing.html) | Tag-driven PyPI release process |
 | [Contributing](./CONTRIBUTING.md) | The `just check` gate and PR workflow |
 
 The Markdown/RST sources live in [`docs/`](./docs); the full spec, plan, and contracts live

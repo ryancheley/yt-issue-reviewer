@@ -35,19 +35,19 @@ datasette ./yir.db                                # browse results externally
 
 Prerequisites: [uv](https://docs.astral.sh/uv/), an authenticated `youtrack-cli`, and a
 reachable self-hosted Ollama with `nomic-embed-text` pulled. Full walkthrough in
-[docs/quickstart.md](./docs/quickstart.md).
+[docs/quickstart.rst](./docs/quickstart.rst).
 
 ## Documentation
 
 | Doc | What it covers |
 |-----|----------------|
-| [Installation](./docs/installation.md) | Prerequisites and install |
-| [Quickstart](./docs/quickstart.md) | Zero → first analysis |
-| [CLI reference](./docs/cli-reference.md) | Every command, flag, and exit code |
-| [Configuration](./docs/configuration.md) | Env vars + `config.toml` with defaults |
-| [Architecture](./docs/architecture.md) | The hybrid scoring pipeline |
-| [Privacy & security](./docs/privacy-and-security.md) | What leaves your infra (nothing) |
-| [Releasing](./docs/releasing.md) | Tag-driven PyPI release process |
+| [Installation](./docs/installation.rst) | Prerequisites and install |
+| [Quickstart](./docs/quickstart.rst) | Zero → first analysis |
+| [CLI reference](./docs/cli-reference.rst) | Every command, flag, and exit code |
+| [Configuration](./docs/configuration.rst) | Env vars + `config.toml` with defaults |
+| [Architecture](./docs/architecture.rst) | The hybrid scoring pipeline |
+| [Privacy & security](./docs/privacy-and-security.rst) | What leaves your infra (nothing) |
+| [Releasing](./docs/releasing.rst) | Tag-driven PyPI release process |
 | [Contributing](./CONTRIBUTING.md) | The `just check` gate and PR workflow |
 
 The full spec, plan, and contracts live under `specs/001-related-issue-finder/`.

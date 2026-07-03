@@ -1,0 +1,74 @@
+[
+  {
+    "issue_id": "PROJ-1",
+    "project": "PROJ",
+    "number": 1,
+    "summary": "Login page returns 500 error on submit",
+    "description": "When a user submits the login form the server responds with a 500 internal error and the session is not created.",
+    "state": "Open",
+    "assignee": "alice",
+    "reporter": "bob",
+    "tags": ["auth", "backend"],
+    "created": "2026-06-01T10:00:00+00:00",
+    "updated": "2026-06-02T10:00:00+00:00",
+    "links": []
+  },
+  {
+    "issue_id": "PROJ-2",
+    "project": "PROJ",
+    "number": 2,
+    "summary": "Signing in fails with internal server error 500",
+    "description": "Users cannot sign in. The login submit button triggers a 500 error from the backend and no session cookie is set.",
+    "state": "Open",
+    "assignee": null,
+    "reporter": "bob",
+    "tags": ["auth", "backend"],
+    "created": "2026-06-01T14:00:00+00:00",
+    "updated": "2026-06-03T09:00:00+00:00",
+    "links": []
+  },
+  {
+    "issue_id": "PROJ-3",
+    "project": "PROJ",
+    "number": 3,
+    "summary": "Export to CSV produces empty file",
+    "description": "The CSV export feature downloads a file with headers only and no data rows for large reports.",
+    "state": "Open",
+    "assignee": "carol",
+    "reporter": "dave",
+    "tags": ["export", "reports"],
+    "created": "2026-06-10T10:00:00+00:00",
+    "updated": "2026-06-11T10:00:00+00:00",
+    "links": []
+  },
+  {
+    "issue_id": "PROJ-4",
+    "project": "PROJ",
+    "number": 4,
+    "summary": "CSV report download is empty for big date ranges",
+    "description": "When exporting reports as CSV over a wide date range the resulting file contains no data rows, only the header line.",
+    "state": "Open",
+    "assignee": null,
+    "reporter": "dave",
+    "tags": ["export", "reports"],
+    "created": "2026-06-10T12:00:00+00:00",
+    "updated": "2026-06-12T10:00:00+00:00",
+    "links": [
+      {"target_id": "PROJ-3", "link_type": "relates to"}
+    ]
+  },
+  {
+    "issue_id": "PROJ-5",
+    "project": "PROJ",
+    "number": 5,
+    "summary": "Add dark mode to the settings screen",
+    "description": "Feature request: allow users to toggle a dark color theme from the settings screen.",
+    "state": "Closed",
+    "assignee": "erin",
+    "reporter": "frank",
+    "tags": ["ui", "enhancement"],
+    "created": "2026-05-01T10:00:00+00:00",
+    "updated": "2026-05-20T10:00:00+00:00",
+    "links": []
+  }
+]

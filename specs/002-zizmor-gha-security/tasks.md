@@ -84,8 +84,8 @@ exit non-zero; branch protection lists `zizmor` as required.
 
 - [X] T010 [US1] Add a `zizmor` job to `.github/workflows/ci.yml` with `permissions: { contents: read }`, checkout pinned + `persist-credentials: false`, and a gating step `uvx zizmor@1.26.1 --offline --persona regular --min-severity medium --format github .github/workflows/` (do NOT use `--format sarif` for the gating step — SARIF always exits 0, per research R2)
 - [X] T011 [US1] Verify the `zizmor` job triggers on both `pull_request` and `push` to `main` (matches the existing `check` triggers) so the audit runs automatically with no manual step
-- [ ] T012 [US1] Push the branch, open the PR, and confirm both `check` and `zizmor` checks run and pass green on the hardened baseline
-- [ ] T013 [US1] Update branch protection on `main` to require both status checks — set required contexts to `["check", "zizmor"]` via `gh api -X PUT repos/ryancheley/yt-issue-reviewer/branches/main/protection` (strict). **Implication**: until this lands, a failing audit would not block merge; after it, every PR must pass `zizmor`. Keep `enforce_admins` and existing PR settings unchanged
+- [X] T012 [US1] Push the branch, open the PR, and confirm both `check` and `zizmor` checks run and pass green on the hardened baseline
+- [X] T013 [US1] Update branch protection on `main` to require both status checks — set required contexts to `["check", "zizmor"]` via `gh api -X PUT repos/ryancheley/yt-issue-reviewer/branches/main/protection` (strict). **Implication**: until this lands, a failing audit would not block merge; after it, every PR must pass `zizmor`. Keep `enforce_admins` and existing PR settings unchanged
 
 **Checkpoint**: The audit is a required, automatic gate on all workflow changes.
 
@@ -113,7 +113,7 @@ justification.
 
 - [X] T016 [US1] Negative test: on a scratch commit, add an unsafe step to a workflow (e.g. `run: echo "${{ github.event.pull_request.title }}"`), run `uvx zizmor@1.26.1 --offline --min-severity medium .github/workflows/`, and confirm a `template-injection` finding with a non-zero exit; then **revert** the change and confirm exit 0 (SC-001)
 - [X] T017 Run through `quickstart.md` validation scenarios (clean baseline, automatic triggers, required-check presence, tool-failure-is-not-a-silent-pass) and confirm each
-- [ ] T018 [P] Close issue #2 by referencing it in the PR description (e.g. "Closes #2") and confirm the proposed-approach checkboxes there are satisfied
+- [X] T018 [P] Close issue #2 by referencing it in the PR description (e.g. "Closes #2") and confirm the proposed-approach checkboxes there are satisfied
 
 ---
 

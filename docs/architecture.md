@@ -45,6 +45,6 @@ service.
 ## Deeper detail
 
 Full entity definitions and the data model are in
-[`specs/001-related-issue-finder/data-model.md`](../specs/001-related-issue-finder/data-model.md);
+[`specs/001-related-issue-finder/data-model.md`](https://github.com/ryancheley/yt-issue-reviewer/blob/main/specs/001-related-issue-finder/data-model.md);
 the design rationale is in
-[`specs/001-related-issue-finder/plan.md`](../specs/001-related-issue-finder/plan.md).
+[`specs/001-related-issue-finder/plan.md`](https://github.com/ryancheley/yt-issue-reviewer/blob/main/specs/001-related-issue-finder/plan.md).

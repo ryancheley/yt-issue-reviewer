@@ -1,0 +1,24 @@
+# Automated dependency updates. Monthly, grouped to minimize PR noise.
+# Action updates bump the pinned commit SHA and keep the `# vX.Y.Z` comment,
+# keeping the hash-pinning (see .github/workflows/) fresh. No secrets required.
+version: 2
+updates:
+  # Python dependencies managed by uv (reads pyproject.toml + uv.lock).
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+
+  # GitHub Actions used in workflows (keeps SHA pins current).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

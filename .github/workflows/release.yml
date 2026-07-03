@@ -1,0 +1,69 @@
+name: Release
+
+# Build and publish to PyPI when a version tag (vX.Y.Z) is pushed.
+# Publishing uses PyPI Trusted Publishing (OIDC) — no stored token. TestPyPI is a
+# dry-run gate before the real PyPI publish. See docs/releasing.md for the one-time
+# Trusted Publisher setup (this workflow cannot create that; it's a maintainer action).
+on:
+  push:
+    tags:
+      - "v*"
+
+# Deny-all by default; each job opts into the least privilege it needs.
+permissions: {}
+
+jobs:
+  # Stage 1: publish to TestPyPI first to catch metadata/upload problems.
+  testpypi:
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      contents: read
+      id-token: write # OIDC token for Trusted Publishing
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: false
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  # Stage 2: publish to PyPI and create the GitHub Release (only after TestPyPI succeeds).
+  pypi:
+    needs: testpypi
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: write # create the GitHub Release
+      id-token: write # OIDC token for Trusted Publishing
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+        with:
+          enable-cache: false
+
+      - name: Build sdist + wheel
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" dist/* --verify-tag --generate-notes

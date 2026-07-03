@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+# Deny-all by default; each job opts into the least privilege it needs.
+permissions: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -12,11 +15,15 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
         with:
           enable-cache: true
 
@@ -37,3 +44,28 @@ jobs:
 
       - name: Tests (pytest)
         run: uv run pytest
+
+  # Static-analysis security audit of the workflow files themselves.
+  # Runs via uvx (no project dependency, no extra runtime). --offline needs no token.
+  # Threshold is medium (persona: regular) and can be tightened later; the gating step
+  # must NOT use --format sarif (SARIF always exits 0 even with findings).
+  zizmor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+
+      - name: Audit workflows (zizmor)
+        run: >-
+          uvx zizmor@1.26.1
+          --offline
+          --persona regular
+          --min-severity medium
+          --format github
+          .github/workflows/

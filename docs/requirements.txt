@@ -1,5 +1,4 @@
 # Documentation build dependencies (Read the Docs / local `sphinx-build`).
+# The docs are authored in reStructuredText — no Markdown parser needed.
 sphinx>=8.0
-myst-parser>=4.0
-linkify-it-py>=2.0
 furo>=2024.8.6

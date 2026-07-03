@@ -1,8 +1,7 @@
 """Sphinx configuration for the yt-issue-reviewer documentation.
 
-The docs are authored in Markdown and rendered with MyST-Parser. See
-``docs/requirements.txt`` for the build dependencies and ``.readthedocs.yaml``
-for the Read the Docs build.
+The docs are authored in reStructuredText. See ``docs/requirements.txt`` for the build
+dependencies and ``.readthedocs.yaml`` for the Read the Docs build.
 """
 
 from __future__ import annotations
@@ -22,20 +21,9 @@ version = release
 
 # -- General configuration ---------------------------------------------------
 
-extensions = ["myst_parser"]
+extensions: list[str] = []
 
-# Recognize GitHub-style admonitions/anchors; colon_fence lets directives use :::.
-myst_enable_extensions = ["colon_fence", "linkify"]
-myst_heading_anchors = 3
-
-# Non-doc files under docs/ that should not be built as pages.
-exclude_patterns = [
-    "_build",
-    "Thumbs.db",
-    ".DS_Store",
-    "requirements.txt",
-    "yt-cli-upstream-candidates.md",
-]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- HTML output -------------------------------------------------------------
 

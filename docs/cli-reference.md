@@ -8,7 +8,7 @@
 | Option | Env var | Default | Description |
 |--------|---------|---------|-------------|
 | `--db PATH` | `YIR_DB` | `yir.db` | SQLite cache + results file (the durable export) |
-| `--config PATH` | `YIR_CONFIG` | `~/.config/yt-issue-reviewer/config.toml` | Config file |
+| `--config PATH` | — | `~/.config/yt-issue-reviewer/config.toml` | Config file (flag only) |
 | `--ollama-host URL` | `OLLAMA_HOST` | `http://127.0.0.1:11434` | Ollama base URL (Tailscale ok) |
 | `-v, --verbose` | — | off | Verbose output to stderr |
 

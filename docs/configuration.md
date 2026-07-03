@@ -13,14 +13,15 @@ Settings resolve in this precedence order (highest first):
 |----------|---------|---------|
 | `OLLAMA_HOST` | Ollama base URL | `http://127.0.0.1:11434` |
 | `YIR_DB` | SQLite cache/results path | `yir.db` |
-| `YIR_CONFIG` | Config file path | `~/.config/yt-issue-reviewer/config.toml` |
 
 YouTrack auth is inherited from `youtrack-cli` (`~/.config/youtrack-cli/.env` or
 `YOUTRACK_BASE_URL` / `YOUTRACK_TOKEN`) — this tool holds no YouTrack credentials.
 
 ## Config file (`config.toml`)
 
-All keys are optional; unset keys fall back to the defaults below.
+The config file is read from `~/.config/yt-issue-reviewer/config.toml` by default, or from
+the path given with the global `--config PATH` option (there is no environment variable for
+it). All keys are optional; unset keys fall back to the defaults below.
 
 ```toml
 db_path = "yir.db"

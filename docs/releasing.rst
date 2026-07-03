@@ -28,6 +28,13 @@ Environment       ``pypi`` (on PyPI) / ``testpypi`` (on TestPyPI)
 Optionally, in GitHub → *Settings → Environments*, create the ``pypi`` and ``testpypi``
 environments and add required reviewers to gate the real publish.
 
+The package version is **static** in ``pyproject.toml`` and drives the built artifact — the
+tag name does not. You must bump the version *and* tag a matching ``vX.Y.Z``; the release
+workflow's ``verify`` job fails fast if the tag and the ``pyproject.toml`` version disagree,
+so a forgotten bump can't produce a wrong or duplicate upload. ``__version__`` is read from
+the installed package metadata, so it stays in sync automatically — only ``pyproject.toml``
+needs bumping.
+
 Cutting a release
 -----------------
 

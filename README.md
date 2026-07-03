@@ -23,7 +23,7 @@ consolidated.
 5. **Report** ranked groups with human-readable evidence; optionally add a flag-gated,
    generated one-line label per group.
 
-## Usage
+## Quickstart
 
 ```bash
 uv sync
@@ -33,4 +33,30 @@ uv run yt-issue-reviewer show --db ./yir.db      # re-display a stored run, offl
 datasette ./yir.db                                # browse results externally
 ```
 
-See `specs/001-related-issue-finder/` for the full spec, plan, and contracts.
+Prerequisites: [uv](https://docs.astral.sh/uv/), an authenticated `youtrack-cli`, and a
+reachable self-hosted Ollama with `nomic-embed-text` pulled. Full walkthrough in
+[docs/quickstart.md](./docs/quickstart.md).
+
+## Documentation
+
+| Doc | What it covers |
+|-----|----------------|
+| [Installation](./docs/installation.md) | Prerequisites and install |
+| [Quickstart](./docs/quickstart.md) | Zero → first analysis |
+| [CLI reference](./docs/cli-reference.md) | Every command, flag, and exit code |
+| [Configuration](./docs/configuration.md) | Env vars + `config.toml` with defaults |
+| [Architecture](./docs/architecture.md) | The hybrid scoring pipeline |
+| [Privacy & security](./docs/privacy-and-security.md) | What leaves your infra (nothing) |
+| [Releasing](./docs/releasing.md) | Tag-driven PyPI release process |
+| [Contributing](./CONTRIBUTING.md) | The `just check` gate and PR workflow |
+
+The full spec, plan, and contracts live under `specs/001-related-issue-finder/`.
+
+## Development
+
+```bash
+just --list      # all developer recipes
+just check       # the exact CI gate: ruff, ruff format, ty, pytest, zizmor
+```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md). Licensed under the [MIT License](./LICENSE).

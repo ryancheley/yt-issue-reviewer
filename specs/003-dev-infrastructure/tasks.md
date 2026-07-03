@@ -118,7 +118,7 @@ lists the required checks; docs link to spec artifacts.
 - [X] T020 Run `just check` and confirm exit 0 (== CI gate: ruff, ruff format, ty, pytest, zizmor across both workflows)
 - [X] T021 Confirm no application change: `git diff --name-only main..HEAD | grep '^src/'` returns nothing, and `uv run pytest -q` passes unchanged (SC-008)
 - [X] T022 Run `quickstart.md` validation scenarios (task runner, dependabot shape, release build + twine check + audit, docs coverage) and confirm each
-- [ ] T023 [P] Open the PR referencing all four issues ("Closes #3", "Closes #5", "Closes #6", "Closes #7") and confirm the required `check` + `zizmor` checks pass on it
+- [X] T023 [P] Open the PR referencing all four issues ("Closes #3", "Closes #5", "Closes #6", "Closes #7") and confirm the required `check` + `zizmor` checks pass on it
 
 ---
 

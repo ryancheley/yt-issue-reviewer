@@ -1,6 +1,18 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.0 → 1.1.0
+Bump rationale: MINOR — loosened the supported Python floor from 3.12+ to 3.11+
+  (Principle VI and Technology and Dependency Constraints) to support installing
+  the tool on Python 3.11-3.14 (feature 004, issue #19). No principle removed or
+  redefined; non-negotiable Principles I & II unaffected.
+Modified sections:
+  - VI. Simplicity: "Python 3.12+" → "Python 3.11+"
+  - Technology and Dependency Constraints: "Python 3.12 or newer" → "3.11 or newer"
+Templates requiring updates: none (no template references a specific Python floor).
+
+Prior entry (1.0.0)
+-------------------
 Version change: (template / unratified) → 1.0.0
 Bump rationale: Initial ratification. First concrete constitution replacing the
   unfilled template; establishes the full governance baseline (MINOR/PATCH
@@ -100,7 +112,7 @@ reduces API load. Surfacing staleness prevents silently reasoning over outdated 
 ### VI. Simplicity
 
 Prefer the Python standard library and small, well-maintained dependencies over large
-frameworks. The project targets Python 3.12+, is managed with uv, tested with pytest,
+frameworks. The project targets Python 3.11+, is managed with uv, tested with pytest,
 and linted with ruff. It starts as a CLI; a web layer is only justified AFTER the
 analysis core has proven useful, and adding one MUST be explicitly justified against
 this principle.
@@ -124,7 +136,7 @@ posture.
 
 ## Technology and Dependency Constraints
 
-- **Language/runtime**: Python 3.12 or newer.
+- **Language/runtime**: Python 3.11 or newer.
 - **Package/environment management**: uv.
 - **Testing**: pytest, with analysis logic covered by fast, offline unit tests.
 - **Linting/formatting**: ruff; the type checker is ty (not mypy, not pyright).
@@ -165,4 +177,4 @@ practice and a principle conflict, the principle wins.
 - **Runtime guidance**: Agent and contributor runtime guidance lives in `CLAUDE.md` and
   the active plan; those documents MUST NOT contradict this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-02 | **Last Amended**: 2026-07-02
+**Version**: 1.1.0 | **Ratified**: 2026-07-02 | **Last Amended**: 2026-07-06

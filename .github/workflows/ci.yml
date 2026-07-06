@@ -13,10 +13,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -28,22 +32,38 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        run: uv python install 3.14
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --dev --python ${{ matrix.python-version }}
 
       - name: Lint (ruff)
-        run: uv run ruff check .
+        run: uv run --python ${{ matrix.python-version }} ruff check .
 
       - name: Format check (ruff)
-        run: uv run ruff format --check .
+        run: uv run --python ${{ matrix.python-version }} ruff format --check .
 
       - name: Type check (ty)
-        run: uv run ty check
+        run: uv run --python ${{ matrix.python-version }} ty check
 
       - name: Tests (pytest)
-        run: uv run pytest
+        run: uv run --python ${{ matrix.python-version }} pytest
+
+  # Aggregate gate: a single stable "check" status context for branch protection,
+  # green only when every `test` matrix leg (3.11-3.14) succeeds. This keeps the
+  # required check name fixed as the matrix dimensions change over time.
+  check:
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: test
+    if: always()
+    steps:
+      - name: Verify all matrix jobs passed
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "One or more test matrix jobs failed: ${{ needs.test.result }}"
+            exit 1
+          fi
 
   # Static-analysis security audit of the workflow files themselves.
   # Runs via uvx (no project dependency, no extra runtime). --offline needs no token.

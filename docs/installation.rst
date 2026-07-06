@@ -9,7 +9,7 @@ Prerequisites
 ``yt-issue-reviewer`` is read-only against YouTrack and does all AI work on a **self-hosted
 Ollama** instance — no third-party hosted AI is ever used.
 
-1. `uv <https://docs.astral.sh/uv/>`__ — Python 3.14+ toolchain and runner.
+1. `uv <https://docs.astral.sh/uv/>`__ — Python 3.11+ toolchain and runner.
 2. **``youtrack-cli`` authenticated** — this tool reads YouTrack *only* through the ``yt`` CLI
    and reuses its existing auth. Set it up once:
    .. code:: bash

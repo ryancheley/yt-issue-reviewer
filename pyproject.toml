@@ -3,7 +3,7 @@ name = "yt-issue-reviewer"
 version = "0.1.1"
 description = "Find related issues across a YouTrack instance using self-hosted Ollama embeddings + local structural signals."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Ryan Cheley" }]
@@ -15,6 +15,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Bug Tracking",
     "Topic :: Utilities",
@@ -62,4 +65,4 @@ addopts = "-q"
 pythonpath = ["src"]
 
 [tool.ty.environment]
-python-version = "3.14"
+python-version = "3.11"

@@ -192,10 +192,19 @@ class CliYouTrackSource:
 
 
 def _load_json_issues(stdout: str) -> list[dict]:
-    stdout = stdout.strip()
+    # A leading UTF-8 BOM (common from Windows toolchains) makes json.loads fail with
+    # "Expecting value: line 1 column 1 (char 0)" — and str.strip() does NOT remove it,
+    # so drop it explicitly before the empty check (issue #29).
+    stdout = stdout.removeprefix("﻿").strip()
     if not stdout:
         return []
-    data = json.loads(stdout)
+    try:
+        data = json.loads(stdout)
+    except json.JSONDecodeError as exc:
+        # yt exited 0 but wrote a banner/table/warning instead of JSON. Surface the
+        # operator-facing error with an excerpt of the actual output, not a traceback.
+        excerpt = stdout[:200]
+        raise YouTrackUnavailable(f"'yt' did not return JSON. Got: {excerpt}") from exc
     if isinstance(data, dict):
         # yt-cli may wrap the payload as {"status":..,"data":[...]} or {"issues":[...]}.
         for key in ("data", "issues", "results"):

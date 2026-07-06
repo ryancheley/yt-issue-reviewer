@@ -199,12 +199,17 @@ def _load_json_issues(stdout: str) -> list[dict]:
     if not stdout:
         return []
     try:
-        data = json.loads(stdout)
+        # strict=False tolerates raw control characters (tabs, ANSI colour codes, etc.) that
+        # `yt` can leave unescaped inside issue text; the default rejects them with
+        # "Invalid control character at ..." (issue #29, second failure mode).
+        data = json.loads(stdout, strict=False)
     except json.JSONDecodeError as exc:
         # yt exited 0 but wrote a banner/table/warning instead of JSON. Surface the
-        # operator-facing error with an excerpt of the actual output, not a traceback.
-        excerpt = stdout[:200]
-        raise YouTrackUnavailable(f"'yt' did not return JSON. Got: {excerpt}") from exc
+        # operator-facing error with the failure position and an excerpt, not a traceback.
+        raise YouTrackUnavailable(
+            f"'yt' did not return valid JSON ({exc.msg} at line {exc.lineno} "
+            f"column {exc.colno}). Got: {stdout[:200]}"
+        ) from exc
     if isinstance(data, dict):
         # yt-cli may wrap the payload as {"status":..,"data":[...]} or {"issues":[...]}.
         for key in ("data", "issues", "results"):

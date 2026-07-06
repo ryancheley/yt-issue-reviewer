@@ -38,6 +38,28 @@ needs bumping.
 Cutting a release
 -----------------
 
+With the ``just`` recipes (recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The release mechanics — with pre-flight guards — are wrapped in ``just`` recipes:
+
+.. code:: bash
+
+   just release-status          # current version, last tag, commits since, recent CI
+   just release-check 0.3.0     # validate the target is a single semver increment
+   just release-prep 0.3.0      # open the version-bump PR (branch → bump → lock → push → PR)
+   # ... review + merge that PR (branch protection + required checks apply) ...
+   git switch main && git pull
+   just release 0.3.0           # tag main + push the tag (never a commit to main)
+
+``release-prep`` never pushes to ``main`` directly; the bump always lands via a PR.
+``release`` refuses to run unless you are on an up-to-date ``main``, ``pyproject.toml``
+already matches the target version, the tag does not yet exist, and ``just check`` passes.
+If a tag push goes wrong, undo it with ``just rollback-release 0.3.0``.
+
+Manually
+~~~~~~~~
+
 1. Bump ``version`` in ``pyproject.toml`` (e.g. ``0.1.0`` → ``0.2.0``).
 2. Commit via a PR and merge (branch protection + required checks apply).
 3. Tag and push:

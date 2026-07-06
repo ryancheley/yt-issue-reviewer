@@ -33,6 +33,15 @@ def test_empty_and_whitespace_still_return_empty() -> None:
     assert _load_json_issues("   \n\t") == []
 
 
+def test_control_chars_in_strings_are_tolerated() -> None:
+    # yt can leave raw tabs / ANSI escape codes unescaped inside issue text; the default
+    # json parser rejects them with "Invalid control character at ..." (issue #29 round 2).
+    payload = '[{"summary": "col1\tcol2 \x1b[31mred\x1b[0m", "idReadable": "X-1"}]'
+    assert _load_json_issues(payload) == [
+        {"summary": "col1\tcol2 \x1b[31mred\x1b[0m", "idReadable": "X-1"}
+    ]
+
+
 def test_non_json_raises_youtrack_unavailable() -> None:
     banner = "Loading issues... done. No results table available."
     with pytest.raises(YouTrackUnavailable) as exc:

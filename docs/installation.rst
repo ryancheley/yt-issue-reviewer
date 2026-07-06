@@ -10,10 +10,13 @@ Prerequisites
 Ollama** instance — no third-party hosted AI is ever used.
 
 1. `uv <https://docs.astral.sh/uv/>`__ — Python 3.11+ toolchain and runner.
-2. **``youtrack-cli`` authenticated** — this tool reads YouTrack *only* through the ``yt`` CLI
-   and reuses its existing auth. Set it up once:
+2. **``youtrack-cli`` installed & authenticated** — this tool reads YouTrack *only* through the
+   ``yt`` CLI and reuses its existing auth. It is a **separate** install (intentionally not a
+   bundled dependency, so ``yt-issue-reviewer`` stays free of ``youtrack-cli``'s heavy native
+   transitive deps — see issue #22). Set it up once:
    .. code:: bash
 
+      uv tool install youtrack-cli   # or: pipx install youtrack-cli
       yt auth login
       yt issues list --project-id PROJ --state Open   # sanity check
 

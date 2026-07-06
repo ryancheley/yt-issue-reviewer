@@ -1,12 +1,15 @@
 """The single seam through which the tool reads YouTrack (read-only, Constitution III).
 
-Production reads go through the ``yt`` CLI (the ``youtrack_cli`` package) as a subprocess
-with JSON output; a fake backs tests. No method mutates YouTrack.
+Production reads go through the ``yt`` CLI as a subprocess with JSON output; a fake backs
+tests. No method mutates YouTrack. ``youtrack-cli`` is an external prerequisite the operator
+installs and authenticates separately (it is *not* a bundled dependency — see issue #22); this
+module only invokes the ``yt`` binary found on PATH.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -14,6 +17,12 @@ from typing import Protocol
 
 from ..errors import YouTrackUnavailable
 from .models import Issue, IssueLink
+
+# Force UTF-8 stdio in the `yt` child process. Without this, on a legacy Windows console
+# (cp1252) the child crashes with UnicodeEncodeError when yt-cli prints a non-ASCII byte
+# (e.g. an emoji) — see issue #23. PYTHONUTF8=1 enables UTF-8 mode; PYTHONIOENCODING is a
+# belt-and-suspenders. No-op on already-UTF-8 platforms.
+_UTF8_ENV = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
 
 
 def _iso_ts(value: object) -> str:
@@ -98,10 +107,10 @@ class FakeYouTrackSource:
 
 
 class CliYouTrackSource:
-    """Production source: shells out to ``yt`` with JSON output.
+    """Production source: shells out to the ``yt`` binary with JSON output.
 
-    Reuses the operator's existing ``youtrack_cli`` auth (shared config / env vars) — this
-    tool holds no credentials of its own.
+    Reuses the operator's existing youtrack-cli auth (shared config / env vars) — this tool
+    holds no credentials of its own, and does not bundle youtrack-cli (see module docstring).
     """
 
     def __init__(self, yt_binary: str = "yt") -> None:
@@ -118,6 +127,8 @@ class CliYouTrackSource:
                 [self._yt, "auth", "token", "--show"],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                env=_UTF8_ENV,
                 timeout=30,
                 check=False,
             )
@@ -162,7 +173,15 @@ class CliYouTrackSource:
         if state == "open":
             cmd += ["--state", "Open"]
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300, check=False)
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                env=_UTF8_ENV,
+                timeout=300,
+                check=False,
+            )
         except (OSError, subprocess.SubprocessError) as exc:  # pragma: no cover - env dependent
             raise YouTrackUnavailable(f"failed to run '{' '.join(cmd)}': {exc}") from exc
         if proc.returncode != 0:

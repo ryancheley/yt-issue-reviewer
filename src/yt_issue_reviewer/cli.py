@@ -23,6 +23,16 @@ def _err(message: str) -> None:
     click.echo(message, err=True)
 
 
+def _common_options(f):
+    """Attach --db/--config/--ollama-host to a subcommand so the documented post-subcommand
+    placement works (#24). They are also on the group (pre-subcommand); when both are given
+    the subcommand value wins — see ``_config``."""
+    f = click.option("--db", "db_path", default=None, help="SQLite cache/results file.")(f)
+    f = click.option("--config", "config_path", default=None, help="TOML config file path.")(f)
+    f = click.option("--ollama-host", default=None, help="Ollama base URL (Tailscale ok).")(f)
+    return f
+
+
 @click.group()
 @click.option("--db", "db_path", default=None, help="SQLite cache/results file.")
 @click.option("--config", "config_path", default=None, help="TOML config file path.")
@@ -38,24 +48,46 @@ def main(
 ) -> None:
     """Find related issues across a YouTrack instance."""
     ctx.ensure_object(dict)
-    ctx.obj["config"] = Config.load(
-        config_path=config_path, db_path=db_path, ollama_host=ollama_host
-    )
+    # Store group-level values; config is resolved per-command so a post-subcommand option
+    # (#24) can override the group value.
+    ctx.obj["group"] = {
+        "db_path": db_path,
+        "config_path": config_path,
+        "ollama_host": ollama_host,
+    }
     ctx.obj["verbose"] = verbose
 
 
-def _config(ctx: click.Context) -> Config:
-    return ctx.obj["config"]
+def _config(
+    ctx: click.Context,
+    *,
+    db_path: str | None = None,
+    config_path: str | None = None,
+    ollama_host: str | None = None,
+) -> Config:
+    """Resolve config with precedence: subcommand option > group option > env/TOML/default."""
+    g = ctx.obj["group"]
+    return Config.load(
+        config_path=config_path or g["config_path"],
+        db_path=db_path or g["db_path"],
+        ollama_host=ollama_host or g["ollama_host"],
+    )
 
 
 # --- doctor -------------------------------------------------------------------
 
 
 @main.command()
+@_common_options
 @click.pass_context
-def doctor(ctx: click.Context) -> None:
+def doctor(
+    ctx: click.Context,
+    db_path: str | None,
+    config_path: str | None,
+    ollama_host: str | None,
+) -> None:
     """Check YouTrack and Ollama connectivity (read-only)."""
-    cfg = _config(ctx)
+    cfg = _config(ctx, db_path=db_path, config_path=config_path, ollama_host=ollama_host)
     ok = True
 
     try:
@@ -94,6 +126,7 @@ _until_option = click.option("--until", default=None, help="Only issues on/befor
 @_state_option
 @_since_option
 @_until_option
+@_common_options
 @click.pass_context
 def ingest(
     ctx: click.Context,
@@ -101,9 +134,12 @@ def ingest(
     state: str,
     since: str | None,
     until: str | None,
+    db_path: str | None,
+    config_path: str | None,
+    ollama_host: str | None,
 ) -> None:
     """Fetch issues from YouTrack and cache them locally."""
-    cfg = _config(ctx)
+    cfg = _config(ctx, db_path=db_path, config_path=config_path, ollama_host=ollama_host)
     repo = Repository.open(cfg.db_path)
     try:
         source = CliYouTrackSource()
@@ -150,6 +186,7 @@ def ingest(
 @_since_option
 @_until_option
 @click.option("--embedding-model", default=None, help="Ollama embedding model.")
+@_common_options
 @click.pass_context
 def embed(
     ctx: click.Context,
@@ -158,9 +195,12 @@ def embed(
     since: str | None,
     until: str | None,
     embedding_model: str | None,
+    db_path: str | None,
+    config_path: str | None,
+    ollama_host: str | None,
 ) -> None:
     """Ensure issues are cached and embedded (reports cache hits)."""
-    cfg = _config(ctx)
+    cfg = _config(ctx, db_path=db_path, config_path=config_path, ollama_host=ollama_host)
     model = embedding_model or cfg.embedding_model
     repo = Repository.open(cfg.db_path)
     try:
@@ -224,6 +264,7 @@ def embed(
 @click.option("--label/--no-label", default=False, help="Generate group labels (flag-gated).")
 @click.option("--label-model", default=None, help="Chat model used when --label is set.")
 @click.option("--refresh/--no-refresh", default=False, help="Ignore cache and re-fetch.")
+@_common_options
 @click.pass_context
 def analyze(
     ctx: click.Context,
@@ -238,9 +279,12 @@ def analyze(
     label: bool,
     label_model: str | None,
     refresh: bool,
+    db_path: str | None,
+    config_path: str | None,
+    ollama_host: str | None,
 ) -> None:
     """Run a full related-issue analysis and report ranked groups."""
-    cfg = _config(ctx)
+    cfg = _config(ctx, db_path=db_path, config_path=config_path, ollama_host=ollama_host)
     model = embedding_model or cfg.embedding_model
     repo = Repository.open(cfg.db_path)
     try:
@@ -283,10 +327,18 @@ def analyze(
 @main.command()
 @click.option("--run-id", default=None, help="Which stored run to display (default: latest).")
 @click.option("--min-score", type=float, default=None, help="Re-filter stored groups for display.")
+@_common_options
 @click.pass_context
-def show(ctx: click.Context, run_id: str | None, min_score: float | None) -> None:
+def show(
+    ctx: click.Context,
+    run_id: str | None,
+    min_score: float | None,
+    db_path: str | None,
+    config_path: str | None,
+    ollama_host: str | None,
+) -> None:
     """Re-display a stored run from the SQLite artifact (no network)."""
-    cfg = _config(ctx)
+    cfg = _config(ctx, db_path=db_path, config_path=config_path, ollama_host=ollama_host)
     repo = Repository.open(cfg.db_path)
     try:
         rid = run_id or repo.latest_run_id()
@@ -302,10 +354,16 @@ def show(ctx: click.Context, run_id: str | None, min_score: float | None) -> Non
 
 
 @main.command()
+@_common_options
 @click.pass_context
-def runs(ctx: click.Context) -> None:
+def runs(
+    ctx: click.Context,
+    db_path: str | None,
+    config_path: str | None,
+    ollama_host: str | None,
+) -> None:
     """List stored analysis runs with their settings and staleness."""
-    cfg = _config(ctx)
+    cfg = _config(ctx, db_path=db_path, config_path=config_path, ollama_host=ollama_host)
     repo = Repository.open(cfg.db_path)
     try:
         terminal.render_runs(repo.list_runs())

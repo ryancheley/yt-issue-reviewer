@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -48,6 +48,22 @@ jobs:
 
       - name: Tests (pytest)
         run: uv run --python ${{ matrix.python-version }} pytest
+
+  # Aggregate gate: a single stable "check" status context for branch protection,
+  # green only when every `test` matrix leg (3.11-3.14) succeeds. This keeps the
+  # required check name fixed as the matrix dimensions change over time.
+  check:
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: test
+    if: always()
+    steps:
+      - name: Verify all matrix jobs passed
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "One or more test matrix jobs failed: ${{ needs.test.result }}"
+            exit 1
+          fi
 
   # Static-analysis security audit of the workflow files themselves.
   # Runs via uvx (no project dependency, no extra runtime). --offline needs no token.

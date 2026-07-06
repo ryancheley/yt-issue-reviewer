@@ -153,8 +153,10 @@ release-prep version: (release-check version)
     echo "Opened the bump PR. Once it merges: git switch main && git pull && just release $v"
 
 # Step 2: cut the release — tag main and push the tag. Run AFTER the release-prep PR merged.
-# Pushes only a tag (never a commit to main); release.yml takes it from there.
-release version: (release-check version)
+# Pushes only a tag (never a commit to main); release.yml takes it from there. No release-check
+# here: pyproject is already AT the target (the merged bump PR did that), which release-check
+# would reject as "not an increment". The `$pkg != $v` guard below verifies the match instead.
+release version:
     #!/bin/sh
     set -eu
     v="{{ version }}"

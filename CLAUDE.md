@@ -1,19 +1,17 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/005-install-cli-fixes/plan.md
+specs/006-fix-yt-json-parse/plan.md
 
-Active feature: Cross-platform install & CLI robustness fixes (005),
-resolving issues #22/#23/#24. No analysis-behavior change. (a) Drop
-youtrack-cli from [project].dependencies — the code never imports it, only
-shells out to the `yt` binary on PATH (a documented prerequisite); this
-removes the docker→pywin32 native chain that breaks Windows installs.
-Regenerate uv.lock. (b) Force UTF-8 subprocess I/O (PYTHONUTF8=1 +
-PYTHONIOENCODING=utf-8, encoding="utf-8") on both `yt` invocations in
-ingest/youtrack.py so a non-ASCII byte doesn't crash on a cp1252 console.
-(c) Make --db/--ollama-host/--config accept documented post-subcommand
-placement across all subcommands (shared decorator; subcommand value wins),
-preserving Config.load precedence.
+Active feature: Graceful handling of non-JSON `yt` output (006), resolving
+issue #29 (related to #24). No analysis-behavior change. Harden the shared
+`_load_json_issues()` in ingest/youtrack.py: (a) strip a leading UTF-8 BOM
+before `json.loads` — `.strip()` doesn't remove it — recovering the exact
+`Expecting value: line 1 column 1 (char 0)` crash from issue #29; (b) wrap
+`json.loads` so a `JSONDecodeError` (banner/table/warning on stdout) re-raises
+the existing operator-facing `YouTrackUnavailable` with a truncated excerpt
+instead of a raw traceback. Empty/whitespace behavior preserved. Fixing the
+one shared function covers all callers/subcommands.
 
 Shipped: (001) Related Issue Finder — uv, click CLI, SQLite
 (Datasette-friendly), self-hosted Ollama, read-only, no hosted AI.
@@ -21,4 +19,6 @@ Shipped: (001) Related Issue Finder — uv, click CLI, SQLite
 (003) Dev infrastructure: Dependabot, tag-driven PyPI release workflow,
 Markdown docs, justfile whose `check` recipe == the CI gate.
 (004) Python 3.11+ support: floor lowered to >=3.11, CI matrix 3.11–3.14.
+(005) Cross-platform install & CLI robustness (#22/#23/#24): drop youtrack-cli
+dep, force UTF-8 subprocess I/O, post-subcommand option placement.
 <!-- SPECKIT END -->

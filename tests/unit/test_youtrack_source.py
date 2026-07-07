@@ -50,3 +50,22 @@ def test_parse_issue_extracts_state_and_assignee_from_custom_fields() -> None:
     assert issue.reporter == "bob"
     assert issue.tags == ("backend",)
     assert issue.created.startswith("2025-01-01")
+
+
+def test_parse_issue_reads_status_custom_field() -> None:
+    # Some projects model workflow state in a `Status` custom field, not built-in `State`
+    # (issue #35). parse_issue must pick it up so state filtering works.
+    raw = {"idReadable": "NG-1", "customFields": [{"name": "Status", "value": {"name": "Done"}}]}
+    assert parse_issue(raw).state == "Done"
+
+
+def test_parse_issue_prefers_state_over_status() -> None:
+    # When both are present the built-in State field wins, preserving existing behavior.
+    raw = {
+        "idReadable": "NG-2",
+        "customFields": [
+            {"name": "State", "value": {"name": "Open"}},
+            {"name": "Status", "value": {"name": "Done"}},
+        ],
+    }
+    assert parse_issue(raw).state == "Open"

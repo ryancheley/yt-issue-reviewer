@@ -150,6 +150,10 @@ class CliYouTrackSource:
         issues: list[Issue] = []
         for project in projects:
             issues.extend(self._fetch_project(project, state))
+        # Server-side `yt --state Open` is a no-op for projects whose state lives in a
+        # "Status" custom field (the built-in State it filters on is empty), so Done issues
+        # come back anyway. Re-apply the client-side filter as a safety net (issue #35).
+        issues = [i for i in issues if _matches_state(i.state, state)]
         # Date-range filtering client-side (YouTrack query date semantics vary).
         if since or until:
             issues = [
@@ -259,7 +263,9 @@ def parse_issue(raw: dict) -> Issue:
     ``state`` and ``assignee`` live inside ``custom_fields`` in YouTrack.
     """
     custom_fields = raw.get("customFields") or raw.get("custom_fields")
-    state = _extract_custom_field(custom_fields, "State", "Stage") or raw.get("state", "")
+    # Some projects model workflow state in a "Status" custom field, not the built-in
+    # "State" (issue #35). "State"/"Stage" are checked first so they win when both exist.
+    state = _extract_custom_field(custom_fields, "State", "Stage", "Status") or raw.get("state", "")
     assignee = _extract_custom_field(custom_fields, "Assignee") or (
         _name_of(raw.get("assignee"), "name", "login") or None
     )

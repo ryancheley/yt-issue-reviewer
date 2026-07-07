@@ -149,7 +149,7 @@ class CliYouTrackSource:
         self.check_available()
         issues: list[Issue] = []
         for project in projects:
-            issues.extend(self._fetch_project(project, state))
+            issues.extend(self._fetch_project(project))
         # Server-side `yt --state Open` is a no-op for projects whose state lives in a
         # "Status" custom field (the built-in State it filters on is empty), so Done issues
         # come back anyway. Re-apply the client-side filter as a safety net (issue #35).
@@ -164,7 +164,7 @@ class CliYouTrackSource:
             ]
         return issues
 
-    def _fetch_project(self, project: str, state: str) -> list[Issue]:
+    def _fetch_project(self, project: str) -> list[Issue]:
         cmd = [
             self._yt,
             "issues",
@@ -174,8 +174,10 @@ class CliYouTrackSource:
             "--format",
             "json",
         ]
-        if state == "open":
-            cmd += ["--state", "Open"]
+        # Deliberately no server-side `--state Open`: yt's filter is unreliable in both
+        # directions — it leaked resolved issues for Status-based projects (#35) and dropped
+        # genuinely-open (State=New) issues (#39). fetch_issues applies the client-side
+        # _matches_state filter unconditionally, which is the single source of truth.
         try:
             proc = subprocess.run(
                 cmd,

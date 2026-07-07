@@ -81,3 +81,39 @@ def test_state_open_excludes_status_done_on_cli_path(status_project) -> None:
 def test_state_all_keeps_status_done_on_cli_path(status_project) -> None:
     issues = CliYouTrackSource().fetch_issues(["NG"], state="all")
     assert {i.issue_id for i in issues} == {"NG-1", "NG-2"}
+
+
+_NEW_ISSUE_JSON = json.dumps(
+    [{"idReadable": "THD-1", "customFields": [{"name": "State", "value": {"name": "New"}}]}]
+)
+
+
+@pytest.fixture
+def open_issues_only_without_state_arg(monkeypatch):
+    """Stub `yt` mimicking the live #39 behavior: the New issue is returned only when NO
+    `--state` argument is passed; `--state Open` returns [] (drops the genuinely-open issue).
+    """
+    commands: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        if "auth" in cmd:  # check_available()
+            return SimpleNamespace(returncode=0, stdout="token", stderr="")
+        commands.append(cmd)
+        stdout = "[]" if "--state" in cmd else _NEW_ISSUE_JSON
+        return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(youtrack.shutil, "which", lambda _: "/usr/bin/yt")
+    return commands
+
+
+def test_state_open_returns_new_issues_without_server_side_filter(
+    open_issues_only_without_state_arg,
+) -> None:
+    # Regression for issue #39: analyze --state open must return genuinely-open (New) issues
+    # even though yt's server-side --state Open drops them.
+    issues = CliYouTrackSource().fetch_issues(["THD"], state="open")
+    assert {i.issue_id for i in issues} == {"THD-1"}
+    # The fix: the issues-list command must NOT pass --state Open.
+    issues_cmd = open_issues_only_without_state_arg[-1]
+    assert "--state" not in issues_cmd

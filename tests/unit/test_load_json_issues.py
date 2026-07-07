@@ -42,6 +42,13 @@ def test_control_chars_in_strings_are_tolerated() -> None:
     ]
 
 
+def test_multiline_description_is_tolerated() -> None:
+    # yt emits raw newlines inside multi-line `description` fields (issue #34); a literal
+    # U+000A inside a JSON string is illegal per spec, so strict json.loads rejected it.
+    payload = '[{"idReadable": "NG-1", "description": "line 1\nline 2"}]'
+    assert _load_json_issues(payload) == [{"idReadable": "NG-1", "description": "line 1\nline 2"}]
+
+
 def test_non_json_raises_youtrack_unavailable() -> None:
     banner = "Loading issues... done. No results table available."
     with pytest.raises(YouTrackUnavailable) as exc:

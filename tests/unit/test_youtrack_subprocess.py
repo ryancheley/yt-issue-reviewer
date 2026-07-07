@@ -48,6 +48,15 @@ def test_fetch_project_forces_utf8(capture_run) -> None:
         _assert_utf8(call)
 
 
+def test_fetch_project_paginates_with_all(capture_run) -> None:
+    # Regression for issue #42: without --all, yt returns only the first page (default
+    # --page-size 100), silently dropping issues 101+ on large (e.g. Jira-imported) projects.
+    CliYouTrackSource().fetch_issues(["PROJ"])
+    issues_cmd = capture_run[-1]["cmd"]  # last call is the `yt issues list`
+    assert "issues" in issues_cmd and "list" in issues_cmd
+    assert "--all" in issues_cmd
+
+
 # yt-cli JSON for a Status-based project: state lives in a `Status` custom field, and the
 # server-side `--state Open` filter is a no-op, so `Done` issues come back regardless.
 _STATUS_PROJECT_JSON = json.dumps(

@@ -173,6 +173,9 @@ class CliYouTrackSource:
             project,
             "--format",
             "json",
+            # --all pages through the whole project; without it yt caps at --page-size
+            # (default 100) and silently drops the rest — e.g. large Jira imports (issue #42).
+            "--all",
         ]
         # Deliberately no server-side `--state Open`: yt's filter is unreliable in both
         # directions — it leaked resolved issues for Status-based projects (#35) and dropped

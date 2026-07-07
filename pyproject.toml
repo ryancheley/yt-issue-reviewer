@@ -1,6 +1,6 @@
 [project]
 name = "yt-issue-reviewer"
-version = "0.3.3"
+version = "0.3.4"
 description = "Find related issues across a YouTrack instance using self-hosted Ollama embeddings + local structural signals."
 readme = "README.md"
 requires-python = ">=3.11"

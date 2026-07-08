@@ -12,7 +12,7 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Protocol
 
 from ..errors import YouTrackUnavailable
@@ -48,6 +48,27 @@ def _in_date_range(value: str, since: str | None, until: str | None) -> bool:
     if since and day < since[:10]:
         return False
     return not (until and day > until[:10])
+
+
+# Issues per bounded `yt issues list --top` request. A gateway that kills yt requests running
+# longer than ~20s tolerates ~250 issues (≈8s measured) but not ~500 (≈22s → killed), so 200
+# leaves margin while keeping the number of paged requests low (issue #45).
+_PAGE_SIZE = 200
+
+
+def _cursor_floor(created: str) -> str | None:
+    """Return a `YYYY-MM-DD` lower bound one day before an issue's ISO ``created`` timestamp.
+
+    Subtracting a day makes the next page's ``created: <cursor> ..`` window overlap the
+    current one rather than leave a gap, so no issue is skipped across timezone differences
+    between this tool and YouTrack; the overlap is removed by id-based de-duplication. Returns
+    ``None`` if ``created`` has no parseable date (so the caller stops rather than loops).
+    """
+    try:
+        day = datetime.strptime(created[:10], "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None
+    return (day - timedelta(days=1)).isoformat()
 
 
 def _matches_state(issue_state: str, state_filter: str) -> bool:
@@ -165,22 +186,56 @@ class CliYouTrackSource:
         return issues
 
     def _fetch_project(self, project: str) -> list[Issue]:
+        # Page the project in bounded `--top _PAGE_SIZE` requests using a created-date cursor,
+        # never one big `--all` request. Some gateways kill any `yt` request running longer
+        # than ~20s; a full-project fetch exceeds that and `yt` returns empty, so the tool
+        # would see 0 issues (issue #45). `--top` is the only server-side bound `yt` exposes
+        # and it has no offset, so we advance by filtering on `created`.
+        #
+        # No server-side `--state Open`: yt's state filter is unreliable both ways — it leaked
+        # resolved issues for Status-based projects (#35) and dropped genuinely-open ones (#39).
+        # fetch_issues applies the client-side _matches_state filter, the single source of truth.
+        seen: set[str] = set()
+        collected: list[Issue] = []
+        cursor: str | None = None
+        while True:
+            # yt rejects an open-ended `created: DATE ..`; it needs a closed range, so pin the
+            # upper bound to a far-future date that no real issue can exceed.
+            clause = f"created: {cursor} .. 2999-12-31 " if cursor else ""
+            query = f"project: {project} {clause}sort by: created asc"
+            page = self._fetch_page(project, query)
+            fresh = [i for i in page if i.issue_id not in seen]
+            for issue in fresh:
+                seen.add(issue.issue_id)
+                collected.append(issue)
+            if len(page) < _PAGE_SIZE:
+                break  # reached the last (short) page
+            if not fresh:
+                raise YouTrackUnavailable(
+                    f"project {project} has more than {_PAGE_SIZE} issues sharing a single "
+                    "created date, which cannot be paged over this connection. Narrow the "
+                    "range with --since/--until, or run from a faster network."
+                )
+            # Advance to the newest created date in this page, minus one day: the next window
+            # overlaps rather than gaps (so timezone skew never skips an issue); the overlap is
+            # removed by the id-based dedup above.
+            cursor = _cursor_floor(max(i.created for i in page))
+            if cursor is None:
+                break  # no usable created timestamp to advance from; return what we have
+        return collected
+
+    def _fetch_page(self, project: str, query: str) -> list[Issue]:
         cmd = [
             self._yt,
             "issues",
             "list",
-            "--project-id",
-            project,
+            "--query",
+            query,
+            "--top",
+            str(_PAGE_SIZE),
             "--format",
             "json",
-            # --all pages through the whole project; without it yt caps at --page-size
-            # (default 100) and silently drops the rest — e.g. large Jira imports (issue #42).
-            "--all",
         ]
-        # Deliberately no server-side `--state Open`: yt's filter is unreliable in both
-        # directions — it leaked resolved issues for Status-based projects (#35) and dropped
-        # genuinely-open (State=New) issues (#39). fetch_issues applies the client-side
-        # _matches_state filter unconditionally, which is the single source of truth.
         try:
             proc = subprocess.run(
                 cmd,

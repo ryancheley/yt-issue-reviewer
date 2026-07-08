@@ -48,13 +48,82 @@ def test_fetch_project_forces_utf8(capture_run) -> None:
         _assert_utf8(call)
 
 
-def test_fetch_project_paginates_with_all(capture_run) -> None:
-    # Regression for issue #42: without --all, yt returns only the first page (default
-    # --page-size 100), silently dropping issues 101+ on large (e.g. Jira-imported) projects.
-    CliYouTrackSource().fetch_issues(["PROJ"])
-    issues_cmd = capture_run[-1]["cmd"]  # last call is the `yt issues list`
-    assert "issues" in issues_cmd and "list" in issues_cmd
-    assert "--all" in issues_cmd
+# --- Chunked fetch via created-date cursor (issue #45) -------------------------------------
+# On gateways that kill any yt request > ~20s, the tool pages the project in bounded --top
+# requests instead of one --all. These stub `yt` like the real thing: filter by a
+# `created: DATE ..` clause, sort by created ascending, return the first --top issues.
+import re  # noqa: E402
+from datetime import UTC, datetime  # noqa: E402
+
+from yt_issue_reviewer.errors import YouTrackUnavailable  # noqa: E402
+
+
+def _millis(day: str) -> int:
+    return int(datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=UTC).timestamp() * 1000)
+
+
+def _syn_issue(n: int, day: str) -> dict:
+    return {"idReadable": f"P-{n}", "created": _millis(day), "summary": f"s{n}", "description": ""}
+
+
+def _paging_stub(monkeypatch, issues: list[dict]) -> list[list[str]]:
+    """Serve `issues` the way `yt` does: honor a `created: DATE ..` lower bound in --query,
+    sort by created asc, and return the first --top. Records the issued list commands."""
+    commands: list[list[str]] = []
+
+    def fake_run(cmd, **kwargs):
+        if "auth" in cmd:  # check_available()
+            return SimpleNamespace(returncode=0, stdout="token", stderr="")
+        commands.append(cmd)
+        query = cmd[cmd.index("--query") + 1]
+        top = int(cmd[cmd.index("--top") + 1])
+        m = re.search(r"created:\s*(\d{4}-\d{2}-\d{2})\s*\.\.", query)
+        lo = _millis(m.group(1)) if m else None
+        pool = sorted(
+            (i for i in issues if lo is None or i["created"] >= lo), key=lambda i: i["created"]
+        )
+        return SimpleNamespace(returncode=0, stdout=json.dumps(pool[:top]), stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(youtrack.shutil, "which", lambda _: "/usr/bin/yt")
+    return commands
+
+
+def test_paginates_across_bounded_pages(monkeypatch) -> None:
+    monkeypatch.setattr(youtrack, "_PAGE_SIZE", 3)
+    issues = [_syn_issue(n, f"2024-01-{n:02d}") for n in range(1, 8)]  # 7 issues, distinct days
+    cmds = _paging_stub(monkeypatch, issues)
+    got = CliYouTrackSource().fetch_issues(["P"], state="all")
+    assert {i.issue_id for i in got} == {f"P-{n}" for n in range(1, 8)}  # all assembled
+    assert len(cmds) > 1  # actually paged
+    for c in cmds:  # every request bounded; never --all
+        assert "--all" not in c
+        assert c[c.index("--top") + 1] == "3"
+
+
+def test_overlapping_pages_are_deduplicated(monkeypatch) -> None:
+    monkeypatch.setattr(youtrack, "_PAGE_SIZE", 3)
+    issues = [_syn_issue(n, f"2024-01-{n:02d}") for n in range(1, 6)]
+    _paging_stub(monkeypatch, issues)
+    ids = [i.issue_id for i in CliYouTrackSource().fetch_issues(["P"], state="all")]
+    assert len(ids) == len(set(ids)) == 5  # boundary overlap collapsed, each issue once
+
+
+def test_same_date_stall_raises(monkeypatch) -> None:
+    monkeypatch.setattr(youtrack, "_PAGE_SIZE", 3)
+    issues = [_syn_issue(n, "2024-01-01") for n in range(1, 6)]  # 5 issues, ALL one day
+    _paging_stub(monkeypatch, issues)
+    with pytest.raises(YouTrackUnavailable, match="created date"):
+        CliYouTrackSource().fetch_issues(["P"], state="all")
+
+
+def test_single_page_project_uses_one_request(monkeypatch) -> None:
+    monkeypatch.setattr(youtrack, "_PAGE_SIZE", 3)
+    issues = [_syn_issue(1, "2024-01-01"), _syn_issue(2, "2024-01-02")]  # 2 < PAGE
+    cmds = _paging_stub(monkeypatch, issues)
+    got = CliYouTrackSource().fetch_issues(["P"], state="all")
+    assert {i.issue_id for i in got} == {"P-1", "P-2"}
+    assert len(cmds) == 1 and "--all" not in cmds[0]  # single bounded request
 
 
 # yt-cli JSON for a Status-based project: state lives in a `Status` custom field, and the

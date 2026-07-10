@@ -58,6 +58,15 @@ def test_unescaped_backslash_in_description_is_tolerated() -> None:
     assert "d+ here" in result[0]["description"]  # parsed, not crashed
 
 
+def test_backslash_before_newline_is_tolerated() -> None:
+    # yt can end a description line with a literal backslash, emitting `\` directly before a
+    # raw newline — invalid JSON that the #48 repair missed because `.` skips newlines (#57).
+    payload = '[{"idReadable": "NG-1", "description": "line ends with backslash\\\n next line"}]'
+    result = _load_json_issues(payload)
+    assert len(result) == 1 and result[0]["idReadable"] == "NG-1"
+    assert "next line" in result[0]["description"]  # parsed, not crashed
+
+
 def test_valid_escapes_are_preserved() -> None:
     # The stray-backslash repair must not corrupt genuinely valid JSON escapes.
     import json

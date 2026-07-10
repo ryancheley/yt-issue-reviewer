@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from datetime import UTC, datetime, timedelta
@@ -255,6 +256,22 @@ class CliYouTrackSource:
         return [parse_issue(raw) for raw in _load_json_issues(proc.stdout)]
 
 
+def _escape_stray_backslashes(text: str) -> str:
+    """Double any backslash that is not part of a valid JSON escape.
+
+    Valid JSON string escapes are ``\\" \\\\ \\/ \\b \\f \\n \\r \\t \\uXXXX``. `yt` can emit a
+    backslash followed by something else — a Windows path (``C:\\Users``) or a regex (``\\d``) in
+    issue text — which is illegal JSON that even ``strict=False`` rejects (issue #48). The first
+    alternative matches a valid escape and is kept verbatim (so already-escaped ``\\\\`` is not
+    corrupted); the second matches any other ``\\X`` and turns it into a literal ``\\\\X``.
+    """
+    return re.sub(
+        r'\\(["\\/bfnrtu])|\\(.)',
+        lambda m: m.group(0) if m.group(1) is not None else "\\\\" + m.group(2),
+        text,
+    )
+
+
 def _load_json_issues(stdout: str) -> list[dict]:
     # A leading UTF-8 BOM (common from Windows toolchains) makes json.loads fail with
     # "Expecting value: line 1 column 1 (char 0)" — and str.strip() does NOT remove it,
@@ -267,13 +284,19 @@ def _load_json_issues(stdout: str) -> list[dict]:
         # `yt` can leave unescaped inside issue text; the default rejects them with
         # "Invalid control character at ..." (issue #29, second failure mode).
         data = json.loads(stdout, strict=False)
-    except json.JSONDecodeError as exc:
-        # yt exited 0 but wrote a banner/table/warning instead of JSON. Surface the
-        # operator-facing error with the failure position and an excerpt, not a traceback.
-        raise YouTrackUnavailable(
-            f"'yt' did not return valid JSON ({exc.msg} at line {exc.lineno} "
-            f"column {exc.colno}). Got: {stdout[:200]}"
-        ) from exc
+    except json.JSONDecodeError:
+        # strict=False does NOT relax escape validity, so a backslash that isn't a valid JSON
+        # escape (a Windows path or regex in issue text) still fails with "Invalid \escape".
+        # Repair stray backslashes and retry once before giving up (issue #48).
+        try:
+            data = json.loads(_escape_stray_backslashes(stdout), strict=False)
+        except json.JSONDecodeError as exc:
+            # yt exited 0 but wrote a banner/table/warning instead of JSON. Surface the
+            # operator-facing error with the failure position and an excerpt, not a traceback.
+            raise YouTrackUnavailable(
+                f"'yt' did not return valid JSON ({exc.msg} at line {exc.lineno} "
+                f"column {exc.colno}). Got: {stdout[:200]}"
+            ) from exc
     if isinstance(data, dict):
         # yt-cli may wrap the payload as {"status":..,"data":[...]} or {"issues":[...]}.
         for key in ("data", "issues", "results"):

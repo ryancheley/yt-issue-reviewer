@@ -1,20 +1,18 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/011-chunked-issue-fetch/plan.md
+specs/012-fix-invalid-json-escape/plan.md
 
-Active feature: Fetch issues in bounded chunks so slow/gated networks work
-(011), resolving issue #45. `analyze` returns 0 issues against instances
-behind a gateway that kills any `yt` request > ~20s: `_fetch_project` uses a
-single `yt issues list --all` request that exceeds the limit → yt returns
-empty → tool reports 0. Fix: replace `--all` with a creation-date cursor loop
-of bounded requests — each page fetches the oldest PAGE (~200) issues via
-`--top PAGE --query "project: <P> sort by: created asc"`; the cursor advances
-to the newest created date in the page minus one day (overlap, never a gap,
-survives timezone skew), next page adds `created: <cursor> ..`; dedup by
-issue id; stop on a short page. Same-date stall (>PAGE issues share one
-created-date) raises YouTrackUnavailable with guidance rather than loop.
-`--page-size`/`--after-cursor`/`--start-page` verified useless in JSON mode.
+Active feature: Tolerate invalid backslash escapes in `yt` JSON output (012),
+resolving issue #48. `analyze` crashes with `JSONDecodeError: Invalid
+\escape` when yt emits a backslash that isn't a valid JSON escape — a Windows
+path (`C:\Users`) or regex (`\d`) in issue text. `strict=False` relaxes only
+control chars, not escape validity. Fix: in `_load_json_issues`, on
+JSONDecodeError, repair once via `_escape_stray_backslashes` (double any `\`
+not part of `\" \\ \/ \b \f \n \r \t \uXXXX`, function-based regex) and retry
+`json.loads(strict=False)`; if still failing, re-raise the existing
+YouTrackUnavailable. Fallback only — happy path and valid escapes untouched.
+Same class as #29/#34, fixed in the shared loader.
 
 Shipped: (001) Related Issue Finder — uv, click CLI, SQLite
 (Datasette-friendly), self-hosted Ollama, read-only, no hosted AI.
@@ -35,4 +33,6 @@ unreliable server-side `yt --state Open`; the client-side `_matches_state`
 filter is the sole authority for open vs resolved.
 (010) Fetch every issue via `yt --all` (#42): pagination so projects with
 >100 issues aren't silently capped. (Superseded by 011 for gated networks.)
+(011) Chunked fetch via created-date cursor (#45): bounded `--top` requests so
+no single `yt` request exceeds a ~20s gateway limit; replaces `--all`.
 <!-- SPECKIT END -->

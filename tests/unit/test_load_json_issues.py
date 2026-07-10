@@ -49,6 +49,24 @@ def test_multiline_description_is_tolerated() -> None:
     assert _load_json_issues(payload) == [{"idReadable": "NG-1", "description": "line 1\nline 2"}]
 
 
+def test_unescaped_backslash_in_description_is_tolerated() -> None:
+    # yt can emit a backslash that isn't a valid JSON escape — a Windows path or a regex in
+    # issue text — which strict=False still rejects with "Invalid \escape" (issue #48).
+    payload = r'[{"idReadable": "NG-1", "description": "path C:\Users and regex \d+ here"}]'
+    result = _load_json_issues(payload)
+    assert len(result) == 1 and result[0]["idReadable"] == "NG-1"
+    assert "d+ here" in result[0]["description"]  # parsed, not crashed
+
+
+def test_valid_escapes_are_preserved() -> None:
+    # The stray-backslash repair must not corrupt genuinely valid JSON escapes.
+    import json
+
+    payload = r'[{"a": "tab\there \\ back \" quote \/ slash A unicode"}]'
+    assert _load_json_issues(payload) == json.loads(payload)
+    assert _load_json_issues(payload)[0]["a"] == 'tab\there \\ back " quote / slash A unicode'
+
+
 def test_non_json_raises_youtrack_unavailable() -> None:
     banner = "Loading issues... done. No results table available."
     with pytest.raises(YouTrackUnavailable) as exc:

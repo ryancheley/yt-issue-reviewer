@@ -195,3 +195,49 @@ def test_state_open_returns_new_issues_without_server_side_filter(
     # The fix: the issues-list command must NOT pass --state Open.
     issues_cmd = open_issues_only_without_state_arg[-1]
     assert "--state" not in issues_cmd
+
+
+# --- Surface yt's stdout in failure messages (issue #54) ------------------------------------
+# yt writes the real reason to stdout (e.g. "❌ Not authenticated" on 0.24.5), while stderr
+# only carries a generic message. The raised error must include the stdout reason.
+
+
+def test_fetch_failure_surfaces_stdout_reason(monkeypatch) -> None:
+    def fake_run(cmd, **kwargs):
+        if "auth" in cmd:  # check_available()
+            return SimpleNamespace(returncode=0, stdout="token", stderr="")
+        return SimpleNamespace(
+            returncode=1, stdout="❌ Not authenticated", stderr="Error: Failed to list issues"
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(youtrack.shutil, "which", lambda _: "/usr/bin/yt")
+    with pytest.raises(YouTrackUnavailable) as exc:
+        CliYouTrackSource().fetch_issues(["NGDEV"], state="all")
+    assert "Not authenticated" in str(exc.value)  # the actionable reason (from stdout)
+
+
+def test_fetch_failure_stderr_only_still_shown(monkeypatch) -> None:
+    def fake_run(cmd, **kwargs):
+        if "auth" in cmd:
+            return SimpleNamespace(returncode=0, stdout="token", stderr="")
+        return SimpleNamespace(returncode=1, stdout="", stderr="boom on stderr only")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(youtrack.shutil, "which", lambda _: "/usr/bin/yt")
+    with pytest.raises(YouTrackUnavailable) as exc:
+        CliYouTrackSource().fetch_issues(["NGDEV"], state="all")
+    assert "boom on stderr only" in str(exc.value)
+
+
+def test_check_available_failure_surfaces_stdout_and_guidance(monkeypatch) -> None:
+    def fake_run(cmd, **kwargs):  # `yt auth token --show` fails with reason on stdout
+        return SimpleNamespace(returncode=1, stdout="❌ Not authenticated [AUTH_004]", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(youtrack.shutil, "which", lambda _: "/usr/bin/yt")
+    with pytest.raises(YouTrackUnavailable) as exc:
+        CliYouTrackSource().check_available()
+    msg = str(exc.value)
+    assert "yt auth login" in msg  # existing guidance preserved
+    assert "AUTH_004" in msg  # stdout reason now surfaced

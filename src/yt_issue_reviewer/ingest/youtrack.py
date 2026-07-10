@@ -72,6 +72,17 @@ def _cursor_floor(created: str) -> str | None:
     return (day - timedelta(days=1)).isoformat()
 
 
+def _proc_output(proc: subprocess.CompletedProcess) -> str:
+    """Combine a failed `yt` call's stdout and stderr for an error message.
+
+    `yt` writes the actionable reason to whichever stream it likes — e.g. youtrack-cli 0.24.5
+    prints "❌ Not authenticated" to stdout while stderr only has "Error: Failed to list issues"
+    (issue #54). Join the non-empty stripped streams so the operator sees the real reason.
+    """
+    parts = [proc.stdout.strip(), proc.stderr.strip()]
+    return "\n".join(part for part in parts if part)
+
+
 def _matches_state(issue_state: str, state_filter: str) -> bool:
     if state_filter == "all":
         return True
@@ -158,7 +169,7 @@ class CliYouTrackSource:
             raise YouTrackUnavailable(f"failed to invoke '{self._yt}': {exc}") from exc
         if proc.returncode != 0:
             raise YouTrackUnavailable(
-                "youtrack-cli is not authenticated. Run `yt auth login`.\n" + proc.stderr.strip()
+                "youtrack-cli is not authenticated. Run `yt auth login`.\n" + _proc_output(proc)
             )
 
     def fetch_issues(
@@ -251,7 +262,7 @@ class CliYouTrackSource:
             raise YouTrackUnavailable(f"failed to run '{' '.join(cmd)}': {exc}") from exc
         if proc.returncode != 0:
             raise YouTrackUnavailable(
-                f"'yt issues list' failed for project {project}:\n{proc.stderr.strip()}"
+                f"'yt issues list' failed for project {project}:\n{_proc_output(proc)}"
             )
         return [parse_issue(raw) for raw in _load_json_issues(proc.stdout)]
 

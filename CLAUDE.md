@@ -1,18 +1,16 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/012-fix-invalid-json-escape/plan.md
+specs/013-add-version-flag/plan.md
 
-Active feature: Tolerate invalid backslash escapes in `yt` JSON output (012),
-resolving issue #48. `analyze` crashes with `JSONDecodeError: Invalid
-\escape` when yt emits a backslash that isn't a valid JSON escape — a Windows
-path (`C:\Users`) or regex (`\d`) in issue text. `strict=False` relaxes only
-control chars, not escape validity. Fix: in `_load_json_issues`, on
-JSONDecodeError, repair once via `_escape_stray_backslashes` (double any `\`
-not part of `\" \\ \/ \b \f \n \r \t \uXXXX`, function-based regex) and retry
-`json.loads(strict=False)`; if still failing, re-raise the existing
-YouTrackUnavailable. Fallback only — happy path and valid escapes untouched.
-Same class as #29/#34, fixed in the shared loader.
+Active feature: `--version` flag for the CLI (013), resolving issue #51.
+`yt-issue-reviewer --version` errors today. Fix: attach Click's built-in
+`@click.version_option(__version__, "-V", "--version", prog_name=
+"yt-issue-reviewer")` to the `main` group in cli.py, importing `__version__`
+(already a single source of truth read from installed metadata in
+__init__.py). `-v` is already `--verbose`, so the short alias is capital `-V`.
+CliRunner test asserts `--version`/`-V` print `yt_issue_reviewer.__version__`
+and exit 0.
 
 Shipped: (001) Related Issue Finder — uv, click CLI, SQLite
 (Datasette-friendly), self-hosted Ollama, read-only, no hosted AI.
@@ -35,4 +33,6 @@ filter is the sole authority for open vs resolved.
 >100 issues aren't silently capped. (Superseded by 011 for gated networks.)
 (011) Chunked fetch via created-date cursor (#45): bounded `--top` requests so
 no single `yt` request exceeds a ~20s gateway limit; replaces `--all`.
+(012) Tolerate invalid backslash escapes in `yt` JSON (#48): repair stray
+backslashes and retry in `_load_json_issues`; happy path untouched.
 <!-- SPECKIT END -->

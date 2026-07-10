@@ -9,6 +9,7 @@ import sys
 
 import click
 
+from . import __version__
 from .config import Config
 from .embeddings.ollama import OllamaEmbedder
 from .errors import OllamaUnavailable, YouTrackUnavailable
@@ -34,6 +35,7 @@ def _common_options(f):
 
 
 @click.group()
+@click.version_option(__version__, "-V", "--version", prog_name="yt-issue-reviewer")
 @click.option("--db", "db_path", default=None, help="SQLite cache/results file.")
 @click.option("--config", "config_path", default=None, help="TOML config file path.")
 @click.option("--ollama-host", default=None, help="Ollama base URL (Tailscale ok).")

@@ -57,3 +57,22 @@ def test_subcommand_value_wins_over_group(captured_config) -> None:
 def test_group_value_still_works_before_subcommand(captured_config) -> None:
     CliRunner().invoke(cli.main, ["--db", "./group.db", "runs"])
     assert captured_config[-1].db_path == "./group.db"
+
+
+def test_version_flag_prints_version() -> None:
+    # `--version` prints the installed version and exits 0 (issue #51). Assert against the
+    # single-source-of-truth value so the test never needs updating on a version bump.
+    from yt_issue_reviewer import __version__
+
+    result = CliRunner().invoke(cli.main, ["--version"])
+    assert result.exit_code == 0
+    assert __version__ in result.output
+
+
+def test_version_short_alias() -> None:
+    # `-V` is the short alias (`-v` is already --verbose, so no collision).
+    from yt_issue_reviewer import __version__
+
+    result = CliRunner().invoke(cli.main, ["-V"])
+    assert result.exit_code == 0
+    assert __version__ in result.output

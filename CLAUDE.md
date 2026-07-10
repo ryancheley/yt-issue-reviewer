@@ -1,16 +1,17 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/013-add-version-flag/plan.md
+specs/014-surface-yt-stdout-errors/plan.md
 
-Active feature: `--version` flag for the CLI (013), resolving issue #51.
-`yt-issue-reviewer --version` errors today. Fix: attach Click's built-in
-`@click.version_option(__version__, "-V", "--version", prog_name=
-"yt-issue-reviewer")` to the `main` group in cli.py, importing `__version__`
-(already a single source of truth read from installed metadata in
-__init__.py). `-v` is already `--verbose`, so the short alias is capital `-V`.
-CliRunner test asserts `--version`/`-V` print `yt_issue_reviewer.__version__`
-and exit 0.
+Active feature: Surface `yt`'s stdout in failure messages (014), resolving
+issue #54. `CliYouTrackSource` raises `YouTrackUnavailable` using only
+`proc.stderr`, but `yt` writes the real reason to stdout (0.24.5 prints
+`❌ Not authenticated` to stdout while stderr only has the generic
+`Failed to list issues`). Fix: add `_proc_output(proc)` joining non-empty
+stripped stdout+stderr, and use it in both failure branches —
+`check_available()` (auth-check rc!=0) and `_fetch_page()` (issues-list
+rc!=0). Existing "Run `yt auth login`" guidance and the success path
+unchanged. Tests stub subprocess.run rc!=0 with the reason on stdout.
 
 Shipped: (001) Related Issue Finder — uv, click CLI, SQLite
 (Datasette-friendly), self-hosted Ollama, read-only, no hosted AI.
@@ -35,4 +36,6 @@ filter is the sole authority for open vs resolved.
 no single `yt` request exceeds a ~20s gateway limit; replaces `--all`.
 (012) Tolerate invalid backslash escapes in `yt` JSON (#48): repair stray
 backslashes and retry in `_load_json_issues`; happy path untouched.
+(013) `--version` flag (#51): Click `version_option` on the main group,
+`-V` alias, reusing the single-source `__version__`.
 <!-- SPECKIT END -->

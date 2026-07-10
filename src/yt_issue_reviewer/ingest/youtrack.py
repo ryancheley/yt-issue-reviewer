@@ -275,11 +275,16 @@ def _escape_stray_backslashes(text: str) -> str:
     issue text — which is illegal JSON that even ``strict=False`` rejects (issue #48). The first
     alternative matches a valid escape and is kept verbatim (so already-escaped ``\\\\`` is not
     corrupted); the second matches any other ``\\X`` and turns it into a literal ``\\\\X``.
+
+    ``re.DOTALL`` is required so the second alternative also matches a backslash directly before
+    a newline (a description whose line ends with a literal backslash); without it ``.`` skips
+    ``\\n`` and that case still raised ``Invalid \\escape`` (issue #57).
     """
     return re.sub(
         r'\\(["\\/bfnrtu])|\\(.)',
         lambda m: m.group(0) if m.group(1) is not None else "\\\\" + m.group(2),
         text,
+        flags=re.DOTALL,
     )
 
 

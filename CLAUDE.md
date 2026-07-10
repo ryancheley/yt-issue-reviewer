@@ -1,17 +1,17 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-specs/014-surface-yt-stdout-errors/plan.md
+specs/015-fix-backslash-newline-escape/plan.md
 
-Active feature: Surface `yt`'s stdout in failure messages (014), resolving
-issue #54. `CliYouTrackSource` raises `YouTrackUnavailable` using only
-`proc.stderr`, but `yt` writes the real reason to stdout (0.24.5 prints
-`❌ Not authenticated` to stdout while stderr only has the generic
-`Failed to list issues`). Fix: add `_proc_output(proc)` joining non-empty
-stripped stdout+stderr, and use it in both failure branches —
-`check_available()` (auth-check rc!=0) and `_fetch_page()` (issues-list
-rc!=0). Existing "Run `yt auth login`" guidance and the success path
-unchanged. Tests stub subprocess.run rc!=0 with the reason on stdout.
+Active feature: Repair a backslash immediately before a newline in `yt` JSON
+(015), resolving issue #57. `analyze` still crashes with `Invalid \escape`
+when a description ends a line with a literal backslash (yt emits `\` before a
+raw newline). The #48 repair `_escape_stray_backslashes` misses it: its
+`\\(.)` branch uses `.`, which doesn't match a newline. Fix: add
+`flags=re.DOTALL` to the `re.sub` so `\<newline>` → `\\<newline>` (escaped
+backslash + raw newline, tolerated by strict=False). Valid escapes and the
+#48 cases unaffected. Narrow sub-case of #48; reported on 0.3.9 (line 5439
+col 79 on a live NGDEV project).
 
 Shipped: (001) Related Issue Finder — uv, click CLI, SQLite
 (Datasette-friendly), self-hosted Ollama, read-only, no hosted AI.
@@ -38,4 +38,6 @@ no single `yt` request exceeds a ~20s gateway limit; replaces `--all`.
 backslashes and retry in `_load_json_issues`; happy path untouched.
 (013) `--version` flag (#51): Click `version_option` on the main group,
 `-V` alias, reusing the single-source `__version__`.
+(014) Surface `yt`'s stdout in failure messages (#54): `_proc_output` joins
+stdout+stderr so the real reason (e.g. "Not authenticated") is shown.
 <!-- SPECKIT END -->

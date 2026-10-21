@@ -11,13 +11,14 @@ implementation shells out to the `yt` CLI with JSON output; a fake backs tests
 from typing import Protocol
 from .models import Issue
 
+
 class YouTrackSource(Protocol):
     def fetch_issues(
         self,
         projects: list[str],
-        state: str = "open",          # "open" | "all"
-        since: str | None = None,     # ISO-8601 date
-        until: str | None = None,     # ISO-8601 date
+        state: str = "open",  # "open" | "all"
+        since: str | None = None,  # ISO-8601 date
+        until: str | None = None,  # ISO-8601 date
     ) -> list[Issue]:
         """Return issues matching the scope, including parsed links.
 
@@ -38,21 +39,22 @@ class YouTrackSource(Protocol):
 @dataclass(frozen=True)
 class IssueLink:
     target_id: str
-    link_type: str          # e.g. "duplicates", "relates to"
+    link_type: str  # e.g. "duplicates", "relates to"
+
 
 @dataclass(frozen=True)
 class Issue:
-    issue_id: str           # "PROJ-123"
+    issue_id: str  # "PROJ-123"
     project: str
     number: int
-    summary: str            # title (YouTrack `summary`)
-    description: str        # may be ""
-    state: str              # parsed from custom_fields
-    assignee: str | None    # parsed from custom_fields
+    summary: str  # title (YouTrack `summary`)
+    description: str  # may be ""
+    state: str  # parsed from custom_fields
+    assignee: str | None  # parsed from custom_fields
     reporter: str
-    tags: tuple[str, ...]   # tags + components
-    created: str            # ISO-8601 UTC
-    updated: str            # ISO-8601 UTC
+    tags: tuple[str, ...]  # tags + components
+    created: str  # ISO-8601 UTC
+    updated: str  # ISO-8601 UTC
     links: tuple[IssueLink, ...]
 ```
 

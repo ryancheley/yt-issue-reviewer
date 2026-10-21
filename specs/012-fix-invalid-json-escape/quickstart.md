@@ -21,8 +21,9 @@ Expected: new tests confirm that
 
 ```python
 import json
+
 bad = r'[{"idReadable":"NG-1","description":"path C:\Users\ryan and regex \d+ here"}]'
-json.loads(bad, strict=False)   # JSONDecodeError: Invalid \escape  (this is issue #48)
+json.loads(bad, strict=False)  # JSONDecodeError: Invalid \escape  (this is issue #48)
 ```
 
 After the fix, `_load_json_issues(bad)` returns the parsed issue list.

@@ -19,8 +19,9 @@ control-char / non-JSON tests still pass (SC-002/003).
 
 ```python
 import json
+
 bad = '[{"d": "line ends with backslash\\\n next line"}]'  # backslash + raw newline
-json.loads(bad, strict=False)   # JSONDecodeError: Invalid \escape  (issue #57)
+json.loads(bad, strict=False)  # JSONDecodeError: Invalid \escape  (issue #57)
 ```
 
 After the fix, `_load_json_issues(bad)` returns the parsed issue list.

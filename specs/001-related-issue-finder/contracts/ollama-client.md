@@ -9,6 +9,7 @@ back tests. Neither ever contacts a third-party hosted service.
 ```python
 from typing import Protocol
 
+
 class Embedder(Protocol):
     model: str
     model_version: str | None
@@ -59,11 +60,12 @@ class Labeler(Protocol):
 
     def check_available(self) -> None: ...
 
+
 @dataclass(frozen=True)
 class GroupLabel:
     label: str
     rationale: str
-    is_generated: bool = True   # always True — see FR-014
+    is_generated: bool = True  # always True — see FR-014
 ```
 
 ### Production: `OllamaLabeler`

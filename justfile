@@ -3,7 +3,7 @@
 # ty, pytest, and the zizmor workflow audit. Keep this recipe and ci.yml in lock-step.
 
 # Pinned zizmor version (matches the `zizmor` CI job).
-ZIZMOR_VERSION := "1.26.1"
+ZIZMOR_VERSION := "1.32.0"
 
 # Show available recipes.
 default:

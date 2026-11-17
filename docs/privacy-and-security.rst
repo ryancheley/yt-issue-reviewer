@@ -43,8 +43,9 @@ computed scores or group membership.
 Supply-chain posture
 --------------------
 
-CI and release workflows use least-privilege permissions and hash-pinned actions, audited
-by ``zizmor`` as a required check. Dependabot keeps those pins current. Releases publish via
+CI and release workflows use least-privilege permissions and actions locked by commit SHA in
+``.github/workflows/actions.lock`` (verified in CI), audited by ``zizmor`` as a required check.
+Dependabot keeps those pins current. Releases publish via
 PyPI Trusted Publishing (OIDC) — no long-lived token is stored.
 
 See the `constitution <https://github.com/ryancheley/yt-issue-reviewer/blob/main/.specify/memory/constitution.md>`__ for the full set of principles.

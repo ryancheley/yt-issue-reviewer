@@ -105,5 +105,5 @@ Notes
 
 - Version is static (manual bump + matching tag). Dynamic-version-from-tag (hatch-vcs / uv
   dynamic versioning) is a possible future enhancement.
-- The release workflow is least-privilege and hash-pinned, and is covered by the required
+- The release workflow is least-privilege and locked via ``actions.lock``, and is covered by the required
   ``zizmor`` audit like every other workflow.
